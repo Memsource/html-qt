@@ -35,7 +35,7 @@ public:
         AfterAfterBody,
         AfterAfterFrameset,
     };
-    Q_ENUM(InsertionMode)
+    Q_ENUMS(InsertionMode)
 
     explicit HTMLParser(QObject *parent = 0);
     ~HTMLParser();

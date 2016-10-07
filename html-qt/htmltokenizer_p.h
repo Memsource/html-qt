@@ -5,11 +5,27 @@
 
 #include <QPair>
 #include <QMap>
-#include <QDebug>
+#include <QSharedPointer>
 
 typedef  bool (HTMLTokenizerPrivate::*HTMLTokenizerPrivateMemFn)();
 
-class HTMLToken
+#if defined(Q_OS_WIN)
+#  if !defined(QT_HTMLQT_EXPORT) && !defined(QT_HTMLQT_IMPORT)
+#    define QT_HTMLQT_EXPORT
+#  elif defined(QT_HTMLQT_IMPORT)
+#    if defined(QT_HTMLQT_EXPORT)
+#      undef QT_HTMLQT_EXPORT
+#    endif
+#    define QT_HTMLQT_EXPORT __declspec(dllimport)
+#  elif defined(QT_HTMLQT_EXPORT)
+#    undef QT_HTMLQT_EXPORT
+#    define QT_HTMLQT_EXPORT __declspec(dllexport)
+#  endif
+#else
+#  define QT_HTMLQT_EXPORT
+#endif
+
+class QT_HTMLQT_EXPORT HTMLToken
 {
 public:
     enum Type {
@@ -18,7 +34,8 @@ public:
         CommentToken,
         DocTypeToken,
     };
-    HTMLToken(Type tokenType) : type(tokenType) {}
+    HTMLToken(Type tokenType) : type( tokenType ), selfClosing( false ), selfClosingAcknowledged( false ), forceQuirks( false )
+     {}
 
     void appendDataCurrentAttributeName(const QChar &c)
     {
@@ -50,17 +67,21 @@ public:
     QString name; // or data for comment or character types
     Type type;
     QList<QPair<QString,QString> > data;
-    bool selfClosing = false;
-    bool selfClosingAcknowledged = false;
-    bool forceQuirks = false;
+    bool selfClosing;
+    bool selfClosingAcknowledged;
+    bool forceQuirks;
     QString doctypePublicId;
     QString doctypeSystemId;
+    QString tagAsPure;
 };
 
+typedef QSharedPointer<HTMLToken> HTMLTokenPtr;
 class HTMLTokenizerPrivate
 {
     Q_DECLARE_PUBLIC(HTMLTokenizer)
 public:
+	HTMLTokenizerPrivate();
+
     // State methods
     bool dataState();
     bool characterReferenceInDataState();
@@ -108,7 +129,8 @@ public:
     // auxiliary methods
     inline bool consumeStream(QChar &c)
     {
-        if (++htmlPos >= htmlSize || htmlPos < 0) {
+		++htmlPos;
+        if (htmlPos >= htmlSize || htmlPos < 0) {
             return false;
         } else {
             c = html.at(htmlPos);
@@ -128,60 +150,35 @@ public:
         htmlPos -= nChars;
     }
 
-    inline bool streamCanRead(int nChars = 1) {
-        return htmlPos + nChars < htmlSize;
-    }
+    //inline 
+	//bool streamCanRead(int nChars = 1) {
+	//       return htmlPos + nChars < htmlSize;
+	//   }
 
-    inline bool streamAtEnd() {
-        return htmlPos > htmlSize;
+    //inline 
+	bool streamAtEnd() {
+        return htmlPos >= htmlSize;
     }
 
     QString consumeEntity(QChar *allowedChar = 0);
     QChar consumeNumberEntity(bool isHex);
     void emitCurrentTagToken();
 
+	static QMap<int, int> initReplacementCharacters();
+
     // current token
-    HTMLToken *currentToken;
+	HTMLTokenPtr currentToken;
 
     HTMLTokenizer *q_ptr;
-    HTMLParser *parser;
+    
+	IHTMLParserInterface * parser;
+
     QString html;
-    int htmlPos = -1;
-    int htmlSize = 0;
-    HTMLTokenizer::State state = HTMLTokenizer::DataState;
-    HTMLTokenizerPrivateMemFn stateFn = &HTMLTokenizerPrivate::dataState;
-    QMap<int,int> replacementCharacters = {
-        {0x00, 0xFFFD}, // REPLACEMENT CHARACTER
-        {0x80, 0x20AC}, // EURO SIGN (€)
-        {0x82, 0x201A}, // SINGLE LOW-9 QUOTATION MARK (‚)
-        {0x83, 0x0192}, // LATIN SMALL LETTER F WITH HOOK (ƒ)
-        {0x84, 0x201E}, // DOUBLE LOW-9 QUOTATION MARK („)
-        {0x85, 0x2026}, // HORIZONTAL ELLIPSIS (…)
-        {0x86, 0x2020}, // DAGGER (†)
-        {0x87, 0x2021}, // DOUBLE DAGGER (‡)
-        {0x88, 0x02C6}, // MODIFIER LETTER CIRCUMFLEX ACCENT (ˆ)
-        {0x89, 0x2030}, // PER MILLE SIGN (‰)
-        {0x8A, 0x0160}, // LATIN CAPITAL LETTER S WITH CARON (Š)
-        {0x8B, 0x2039}, // SINGLE LEFT-POINTING ANGLE QUOTATION MARK (‹)
-        {0x8C, 0x0152}, // LATIN CAPITAL LIGATURE OE (Œ)
-        {0x8E, 0x017D}, // LATIN CAPITAL LETTER Z WITH CARON (Ž)
-        {0x91, 0x2018}, // LEFT SINGLE QUOTATION MARK (‘)
-        {0x92, 0x2019}, // RIGHT SINGLE QUOTATION MARK (’)
-        {0x93, 0x201C}, // LEFT DOUBLE QUOTATION MARK (“)
-        {0x94, 0x201D}, // RIGHT DOUBLE QUOTATION MARK (”)
-        {0x95, 0x2022}, // BULLET (•)
-        {0x96, 0x2013}, // EN DASH (–)
-        {0x97, 0x2014}, // EM DASH (—)
-        {0x98, 0x02DC}, // SMALL TILDE (˜)
-        {0x99, 0x2122}, // TRADE MARK SIGN (™)
-        {0x9A, 0x0161}, // LATIN SMALL LETTER S WITH CARON (š)
-        {0x9B, 0x203A}, // SINGLE RIGHT-POINTING ANGLE QUOTATION MARK (›)
-        {0x9C, 0x0153}, // LATIN SMALL LIGATURE OE (œ)
-        {0x9E, 0x017E}, // LATIN SMALL LETTER Z WITH CARON (ž)
-        {0x9F, 0x0178}, // LATIN CAPITAL LETTER Y WITH DIAERESIS (Ÿ)
-    };
-
-
+	int tagStart;
+    int htmlPos;
+    int htmlSize;
+    HTMLTokenizer::State state;
+    HTMLTokenizerPrivateMemFn stateFn;
 };
 
 #endif // HTMLTOKENIZER_P_H
