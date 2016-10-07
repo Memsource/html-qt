@@ -1,0 +1,8 @@
+/lib
+/Makefile
+/buildlib/Makefile
+/buildlib/Makefile.Debug
+/buildlib/Makefile.Release
+/buildlib/release/*.obj
+/buildlib/debug/*.obj
+/buildlib/*.pdb
