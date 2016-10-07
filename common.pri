@@ -1,7 +1,7 @@
 #exists(config.pri):infile(config.pri, SOLUTIONS_LIBRARY, yes):
 CONFIG += htmlqt-uselib
 
-!contains(TEMPLATE, lib): {
+contains(TEMPLATE, vcapp): {
     TEMPLATE=lib
 }
 
