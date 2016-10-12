@@ -1,9 +1,9 @@
 include(../common.pri)
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
-#QT *= network
-#greaterThan(QT_MAJOR_VERSION, 4): QT *= widgets
 
+QT += core
+QT -= gui
 
 htmlqt-uselib:!htmlqt-buildlib {
     LIBS += -L$$HTMLQT_LIBDIR -l$$HTMLQT_LIBNAME
