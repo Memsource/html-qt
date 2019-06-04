@@ -1,9 +1,6 @@
 #exists(config.pri):infile(config.pri, SOLUTIONS_LIBRARY, yes):
 CONFIG += htmlqt-uselib
 
-contains(TEMPLATE, vcapp): {
-    TEMPLATE=lib
-}
 
 TEMPLATE += fakelib
 
