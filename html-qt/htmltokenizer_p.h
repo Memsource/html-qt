@@ -40,7 +40,7 @@ public:
     void appendDataCurrentAttributeName(const QChar &c)
     {
         if (data.isEmpty()) {
-            data.append(qMakePair<QString,QString>(c, ""));
+            data.append(qMakePair<QString,QString>(c, {}));
         } else {
             data.last().first.append(c);
         }
@@ -49,7 +49,7 @@ public:
     void appendDataCurrentAttributeValue(const QChar &c)
     {
         if (data.isEmpty()) {
-            data.append(qMakePair<QString,QString>("", c));
+            data.append(qMakePair<QString,QString>({}, c));
         } else {
             data.last().second.append(c);
         }
@@ -58,7 +58,7 @@ public:
     void appendDataCurrentAttributeValue(const QString &s)
     {
         if (data.isEmpty()) {
-            data.append(qMakePair<QString,QString>("", s));
+            data.append(qMakePair<QString,QString>({}, s));
         } else {
             data.last().second.append(s);
         }
